@@ -1,3 +1,4 @@
+import os.path
 import config
 import uuid
 import json
@@ -33,6 +34,17 @@ native-country: United-States, Cambodia, England, Puerto-Rico, Canada, Germany, 
 fields = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
           'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss',
           'hours-per-week', 'native-country']
+
+all_fields = fields[:]
+all_fields.append('income')
+
+csv_file = '//Users/keren/tikalk/income_predict_server/a.csv'
+
+def create_file(csv_file):
+    with open(csv_file, 'a') as income_file:
+        income_file.write(', '.join(all_fields))
+        income_file.write('\n')
+
 
 @views.route('/api/v1/predict', methods=['POST'])
 def http_predict():
@@ -73,6 +85,12 @@ def http_income():
     if request.json and 'id' in request.json and 'income' in request.json:
         user_info = users_data.pop(request.json['id'])
         user_info['income'] = request.json['income']
+        if os.path.isfile(csv_file) is False:
+            create_file(csv_file)
+
         # append to file
-        with open('/opt/income/income.csv', 'w') as income_file:
-            [income_file.write('{0},{1}\n'.format(key, value)) for key, value in user_info.items()]
+        with open(csv_file, 'a') as income_file:
+            income_file.write(', '.join([str(user_info[x]) for x in all_fields]))
+            income_file.write('\n')
+            # [income_file.write('{0},{1}\n'.format(key, value)) for key, value in user_info.items()]
+        return "200"

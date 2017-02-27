@@ -13,5 +13,6 @@ log.debug('Binding to ' + bind_ip + ':' + str(bind_port))
 
 app.register_blueprint(views)
 
+
 if __name__ == "__main__":
    app.run(debug=debug_mode, host=bind_ip, port=bind_port)
