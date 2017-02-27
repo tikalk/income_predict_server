@@ -38,7 +38,7 @@ fields = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-s
 all_fields = fields[:]
 all_fields.append('income')
 
-csv_file = '//Users/keren/tikalk/income_predict_server/a.csv'
+csv_file = '/opt/server/data.csv'
 
 def create_file(csv_file):
     with open(csv_file, 'a') as income_file:
@@ -76,7 +76,7 @@ def http_predict():
     users_data[uid.hex] = user_info
 
     # call predict
-    # income = predict('/opt/income.pmml', user_info)
+    # income = predict('/opt/server/income.pmml', user_info)
     return json.dumps({"id": uid.hex, "predict": True})
 
 @views.route('/api/v1/income', methods=['POST'])
@@ -92,5 +92,4 @@ def http_income():
         with open(csv_file, 'a') as income_file:
             income_file.write(', '.join([str(user_info[x]) for x in all_fields]))
             income_file.write('\n')
-            # [income_file.write('{0},{1}\n'.format(key, value)) for key, value in user_info.items()]
         return "200"
