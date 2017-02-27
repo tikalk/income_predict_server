@@ -4,7 +4,7 @@ import uuid
 import json
 
 from flask import Blueprint, request, Response
-from com.tikalk.predict.utils import predict
+from com.tikalk.predict.utils import predict, predict_income
 
 log = config.configure_logging()
 conf = config.get_config()
@@ -38,7 +38,7 @@ fields = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-s
 all_fields = fields[:]
 all_fields.append('income')
 
-csv_file = '/opt/server/data.csv'
+csv_file = '/Users/keren/tikalk/income_predict_server/data.csv'
 
 def create_file(csv_file):
     with open(csv_file, 'a') as income_file:
@@ -56,35 +56,36 @@ def http_predict():
 
     uid = uuid.uuid4()
     user_info = {
-        'id': uid,
         'age': request.json['age'],
         'workclass': request.json['workclass'],
         'fnlwgt': request.json['fnlwgt'],
         'education': request.json['education'],
-        'education-num': request.json['education-num'],
-        'marital-status': request.json['marital-status'],
+       'education_num': request.json['education-num'],
+        'marital_status': request.json['marital-status'],
         'occupation': request.json['occupation'],
-        'relationship': request.json['relationship'],
-        'race': request.json['race'],
-        'sex': request.json['sex'],
-        'capital-gain': request.json['capital-gain'],
-        'capital-loss': request.json['capital-loss'],
-        'hours-per-week': request.json['hours-per-week'],
-        'native-country': request.json['native-country'],
+       'relationship': request.json['relationship'],
+       'race': request.json['race'],
+       'sex': request.json['sex'],
+        'capital_gain': request.json['capital-gain'],
+        'capital_loss': request.json['capital-loss'],
+        'hours_per_week': request.json['hours-per-week'],
+        'native_country': request.json['native-country'],
     }
     # collect data
     users_data[uid.hex] = user_info
 
     # call predict
-    # income = predict('/opt/server/income.pmml', user_info)
-    return json.dumps({"id": uid.hex, "predict": True})
+    # income = predict('/Users/keren/tikalk/income_predict_server/tree-model.xml', user_info)
+    income = predict_income(user_info)
+    print 'income: {}'.format(income)
+    return json.dumps({"id": uid.hex, "predict": income})
 
 @views.route('/api/v1/income', methods=['POST'])
 def http_income():
     log.debug('request ' + str(request.json))
     if request.json and 'id' in request.json and 'income' in request.json:
         user_info = users_data.pop(request.json['id'])
-        user_info['income'] = request.json['income']
+        user_info['income'] = '>=50K' if request.json['income'] >= 50000 else '<50K'
         if os.path.isfile(csv_file) is False:
             create_file(csv_file)
 

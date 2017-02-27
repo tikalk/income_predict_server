@@ -1,6 +1,15 @@
 from lxml import etree
 
 
+def predict_income(values):
+    if values['age'] > 30:
+        if values['workclass'] in ['Private', 'Self-emp-not-inc', 'Self-emp-inc']:
+            if values['education'] in ['Bachelors', 'Some-college']:
+                if values['occupation'] in ['Sales', 'Exec-managerial', 'Prof-specialty']:
+                    if values['hours_per_week'] > 40:
+                        return True
+    return False
+
 def predict(model, values):
     tree = etree.parse(model)
     root = tree.getroot()
@@ -17,19 +26,20 @@ def predict_tree_model(model, values):
 
     tree = etree.parse(model)
     root = tree.getroot()
-    tree_model = root.find('{http://www.dmg.org/PMML-4_1}TreeModel')
+    tree_model = root.find('{http://www.dmg.org/PMML-4_3}TreeModel')
 
     # TODO: check values into MiningField
 
-    Node = tree_model.find('{http://www.dmg.org/PMML-4_1}Node')
+    Node = tree_model.find('{http://www.dmg.org/PMML-4_3}Node')
     predict = Node.get("score")
     pct = 0.5
     n_tot = Node.get("recordCount")
     n_predict = next(x.get('recordCount') for x in Node if
                      etree.QName(x).localname == 'ScoreDistribution' and x.get('value') == predict)
-
+    count = 0
     while True:
-
+        count +=1
+        print count
         try:
 
             fill = next(e for e in Node
