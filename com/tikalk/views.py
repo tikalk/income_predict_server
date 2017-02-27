@@ -1,4 +1,6 @@
 import config
+import uuid
+import json
 
 from flask import Blueprint, request, Response
 from com.tikalk.predict.utils import predict
@@ -8,6 +10,8 @@ conf = config.get_config()
 
 
 views = Blueprint('views', __name__)
+
+users_data = {}
 
 
 """
@@ -31,14 +35,16 @@ fields = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-s
           'hours-per-week', 'native-country']
 
 @views.route('/api/v1/predict', methods=['POST'])
-def http_api_resource_operation():
+def http_predict():
     log.debug('request ' + str(request.json))
     if not request.json or len(request.json) != 14:
         missing = [x for x in fields if x not in request.json]
         return Response('Missing attributes: {}'.format(', '.join(missing)),
                         status=400, mimetype='application/json')
 
+    uid = uuid.uuid4()
     user_info = {
+        'id': uid,
         'age': request.json['age'],
         'workclass': request.json['workclass'],
         'fnlwgt': request.json['fnlwgt'],
@@ -54,8 +60,19 @@ def http_api_resource_operation():
         'hours-per-week': request.json['hours-per-week'],
         'native-country': request.json['native-country'],
     }
+    # collect data
+    users_data[uid.hex] = user_info
 
     # call predict
-    income = predict('/opt/income.pmml', user_info)
-    return {'income': income}
+    # income = predict('/opt/income.pmml', user_info)
+    return json.dumps({"id": uid.hex, "predict": True})
 
+@views.route('/api/v1/income', methods=['POST'])
+def http_income():
+    log.debug('request ' + str(request.json))
+    if request.json and 'id' in request.json and 'income' in request.json:
+        user_info = users_data.pop(request.json['id'])
+        user_info['income'] = request.json['income']
+        # append to file
+        with open('/opt/income/income.csv', 'w') as income_file:
+            [income_file.write('{0},{1}\n'.format(key, value)) for key, value in user_info.items()]
